@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 90" width="100%" height="100%">
+  <!-- Left wing — pivots from right edge (body connection) -->
+  <g class="bat-wing-l">
+    <path d="M 75 52 C 55 35, 25 20, 8 32 C 2 40, 12 52, 28 50 C 45 48, 62 54, 75 56" fill="#1a0828"/>
+    <path d="M 75 52 L 14 24" stroke="#0e041a" stroke-width="0.9" fill="none"/>
+    <path d="M 75 52 L 6 37"  stroke="#0e041a" stroke-width="0.7" fill="none"/>
+    <path d="M 75 52 L 26 50" stroke="#0e041a" stroke-width="0.6" fill="none"/>
+  </g>
+  <!-- Right wing — pivots from left edge (body connection) -->
+  <g class="bat-wing-r">
+    <path d="M 85 52 C 105 35, 135 20, 152 32 C 158 40, 148 52, 132 50 C 115 48, 98 54, 85 56" fill="#1a0828"/>
+    <path d="M 85 52 L 146 24" stroke="#0e041a" stroke-width="0.9" fill="none"/>
+    <path d="M 85 52 L 154 37" stroke="#0e041a" stroke-width="0.7" fill="none"/>
+    <path d="M 85 52 L 134 50" stroke="#0e041a" stroke-width="0.6" fill="none"/>
+  </g>
+  <!-- Body -->
+  <ellipse cx="80" cy="58" rx="11" ry="13" fill="#130620"/>
+  <!-- Head -->
+  <ellipse cx="80" cy="44" rx="13" ry="11" fill="#1a0828"/>
+  <!-- Ears -->
+  <polygon points="70,38 64,18 73,36" fill="#1a0828"/>
+  <polygon points="90,38 96,18 87,36" fill="#1a0828"/>
+  <polygon points="70,37 67,23 72,35" fill="#2d0a40"/>
+  <polygon points="90,37 93,23 88,35" fill="#2d0a40"/>
+  <!-- Eyes -->
+  <ellipse cx="74" cy="43" rx="4"   ry="3.5" fill="#880000" class="bat-eyes"/>
+  <ellipse cx="86" cy="43" rx="4"   ry="3.5" fill="#880000" class="bat-eyes"/>
+  <ellipse cx="74" cy="43" rx="2"   ry="1.8" fill="#ff2200"/>
+  <ellipse cx="86" cy="43" rx="2"   ry="1.8" fill="#ff2200"/>
+  <!-- Nose -->
+  <path d="M 78 48 Q 80 51 82 48" stroke="#0e041a" stroke-width="1.2" fill="none"/>
+  <!-- Fangs -->
+  <polygon points="76,52 74,60 78,52" fill="#dddccc"/>
+  <polygon points="84,52 82,60 86,52" fill="#dddccc"/>
+</svg>

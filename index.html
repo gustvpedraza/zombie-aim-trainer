@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZOMBIE AIM — Doom Style Trainer</title>
+</head>
+<body>
+  <canvas id="rc"></canvas>
+  <canvas id="vc"></canvas>
+  <div id="zombie-layer"></div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div id="score">SCORE: 0</div>
+    <div id="kills-hud">KILLS: 0</div>
+    <div id="combo-hud"></div>
+    <div id="diff-hud">NORMAL</div>
+    <div id="crosshair">
+      <div class="ch-line ch-h"></div>
+      <div class="ch-line ch-v"></div>
+      <div class="ch-dot"></div>
+    </div>
+    <div id="kill-feed"></div>
+    <div id="hp-wrap">
+      <div class="stat-lbl">SALUD</div>
+      <div id="hp-bar"><div id="hp-fill"></div></div>
+      <div id="hp-num">100</div>
+    </div>
+    <div id="ammo-wrap">
+      <div class="stat-lbl">MUNICIÓN</div>
+      <div><span id="ammo-cur">30</span><span id="ammo-max"> / 30</span></div>
+      <div id="reload-txt">RECARGANDO...</div>
+      <div id="low-ammo">¡ MUNICIÓN BAJA !</div>
+    </div>
+  </div>
+
+  <!-- Start screen -->
+  <div id="scr-start" class="screen">
+    <div class="gtitle">ZOMBIE AIM</div>
+    <div class="gsub">DOOM STYLE AIM TRAINER</div>
+    <div class="slabel">SELECCIONA DIFICULTAD</div>
+    <div class="diff-row">
+      <button class="dbtn" data-d="1">FÁCIL</button>
+      <button class="dbtn sel" data-d="2">NORMAL</button>
+      <button class="dbtn" data-d="3">DIFÍCIL</button>
+    </div>
+    <button class="pbtn" id="btn-start">INICIAR PARTIDA</button>
+    <div class="hint">WASD = MOVER &nbsp;•&nbsp; CLICK = DISPARAR &nbsp;•&nbsp; R = RECARGAR &nbsp;•&nbsp; ESC = PAUSA</div>
+  </div>
+
+  <!-- Pause screen -->
+  <div id="scr-pause" class="screen" style="display:none">
+    <div class="gtitle" style="font-size:50px">PAUSADO</div>
+    <button class="sbtn" id="btn-resume">CONTINUAR</button>
+    <button class="sbtn" id="btn-pmenu">MENÚ PRINCIPAL</button>
+  </div>
+
+  <!-- Game Over screen -->
+  <div id="scr-over" class="screen" style="display:none">
+    <div class="gtitle">GAME OVER</div>
+    <div class="slabel">PUNTUACIÓN FINAL</div>
+    <div class="fscore" id="final-score">0</div>
+    <div class="srow">KILLS: <span id="stat-kills">0</span></div>
+    <div class="srow">PRECISIÓN: <span id="stat-acc">0%</span></div>
+    <div class="srow">COMBO MÁX: <span id="stat-combo">0</span></div>
+    <div style="margin-top:30px"><button class="pbtn" id="btn-restart">JUGAR DE NUEVO</button></div>
+    <div><button class="sbtn" id="btn-omenu">MENÚ PRINCIPAL</button></div>
+  </div>
+
+  <!-- Gun SVG — inline para poder manipular sus clases con JS -->
+  <svg id="gun-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+    <defs>
+      <style>
+        .weapon-group { transform-origin: 100px 200px; }
+        .muzzle-flash  { opacity: 0; transform-origin: 100px 30px; }
+        .casing        { opacity: 0; }
+
+        .firing .weapon-group { animation: fire-recoil    0.6s ease-out; }
+        .firing .slide        { animation: slide-blowback 0.6s ease-out; }
+        .firing .muzzle-flash { animation: flash-burst    0.6s ease-out; }
+        .firing .casing       { animation: eject-casing   0.6s ease-out; }
+
+        @keyframes fire-recoil {
+          0%, 100% { transform: translateY(0)    rotate(0deg);  }
+          10%      { transform: translateY(12px) rotate(-4deg); }
+          40%      { transform: translateY(0)    rotate(0deg);  }
+        }
+        @keyframes slide-blowback {
+          0%, 100% { transform: translateY(0);   }
+          10%      { transform: translateY(15px); }
+          30%      { transform: translateY(0);   }
+        }
+        @keyframes flash-burst {
+          0%, 100% { opacity: 0; transform: scale(0.2); }
+          5%       { opacity: 1; transform: scale(1.5); }
+          15%      { opacity: 0; transform: scale(0.8); }
+        }
+        @keyframes eject-casing {
+          0%   { opacity: 1; transform: translate(0,0)        rotate(0deg);   }
+          20%  { opacity: 1; transform: translate(30px,-20px) rotate(180deg); }
+          50%  { opacity: 0; transform: translate(50px,20px)  rotate(360deg); }
+          100% { opacity: 0; }
+        }
+      </style>
+    </defs>
+    <g class="weapon-group">
+      <g class="muzzle-flash">
+        <polygon points="100,5 80,30 100,20 120,30" fill="#ff7700" />
+        <polygon points="100,10 90,25 100,22 110,25" fill="#ffff00" />
+        <polygon points="100,15 95,22 100,20 105,22" fill="#ffffff" />
+      </g>
+      <g class="casing">
+        <rect x="110" y="80" width="8" height="14" fill="#ffd700" rx="1"/>
+        <rect x="110" y="90" width="8" height="4" fill="#ccaa00" />
+      </g>
+      <rect x="85" y="30" width="30" height="120" fill="#2c3136" rx="2" />
+      <circle cx="100" cy="38" r="8" fill="#111" />
+      <g class="slide">
+        <path d="M 80 40 L 120 40 L 120 100 L 80 100 Z" fill="#4d565e" />
+        <path d="M 80 40 L 85 45 L 85 100 L 80 100 Z" fill="#6c7a86" />
+        <rect x="110" y="80" width="2" height="15" fill="#2c3136" />
+        <rect x="114" y="80" width="2" height="15" fill="#2c3136" />
+        <rect x="118" y="80" width="2" height="15" fill="#2c3136" />
+        <rect x="96" y="35" width="8" height="5" fill="#111" />
+        <rect x="105" y="70" width="15" height="25" fill="#111" />
+        <rect x="107" y="72" width="11" height="21" fill="#ffd700" />
+      </g>
+      <path d="M 50 130 C 50 130, 70 110, 100 110 C 130 110, 150 130, 150 130 L 150 200 L 50 200 Z" fill="#e8b48c" />
+      <path d="M 50 150 C 70 140, 80 150, 80 200 L 50 200 Z" fill="#c49068" />
+      <path d="M 115 115 C 130 115, 135 130, 135 140 C 135 150, 115 150, 115 150 Z" fill="#e8b48c" />
+      <path d="M 118 120 C 128 120, 130 130, 130 138 C 130 145, 118 145, 118 145 Z" fill="#c49068" />
+      <path d="M 55 130 C 70 115, 90 120, 90 140 C 90 150, 75 145, 55 130 Z" fill="#f4c6a4" />
+      <polygon points="80,110 120,110 120,125 80,125" fill="#000000" opacity="0.3" />
+    </g>
+  </svg>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

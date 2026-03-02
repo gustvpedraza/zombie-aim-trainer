@@ -1,0 +1,146 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; cursor: none; user-select: none; }
+
+/* ── canvases ──────────────────────────────────────────── */
+#rc { position: fixed; inset: 0; width: 100%; height: 100%; }
+#vc { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+
+/* ── HUD ───────────────────────────────────────────────── */
+#hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; display: none; }
+#score { position: absolute; top: 16px; left: 20px; font-size: 28px; color: #00ff88; text-shadow: 0 0 12px #00ff88; letter-spacing: 2px; }
+#kills-hud { position: absolute; top: 54px; left: 20px; font-size: 16px; color: #ff6600; letter-spacing: 1px; }
+#combo-hud { position: absolute; top: 76px; left: 20px; font-size: 14px; color: #ffdd00; letter-spacing: 1px; opacity: 0; transition: opacity .3s; }
+#diff-hud { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #555; letter-spacing: 3px; }
+#crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 22px; height: 22px; }
+.ch-line { position: absolute; background: rgba(255,255,255,.85); }
+.ch-h { width: 100%; height: 2px; top: 50%; transform: translateY(-50%); }
+.ch-v { height: 100%; width: 2px; left: 50%; transform: translateX(-50%); }
+.ch-dot { position: absolute; width: 3px; height: 3px; background: #fff; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+#kill-feed { position: absolute; top: 20px; right: 20px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.kentry { font-size: 13px; color: #ff8844; animation: kfade 1.8s ease-out forwards; letter-spacing: 1px; }
+@keyframes kfade { 0% { opacity: 1; transform: translateX(0); } 60% { opacity: 1; } 100% { opacity: 0; transform: translateX(30px); } }
+#hp-wrap { position: absolute; bottom: 20px; left: 20px; }
+.stat-lbl { font-size: 11px; color: #555; letter-spacing: 2px; margin-bottom: 4px; }
+#hp-bar { width: 220px; height: 13px; background: rgba(255,255,255,.08); border: 1px solid #333; border-radius: 3px; overflow: hidden; }
+#hp-fill { height: 100%; width: 100%; background: linear-gradient(90deg,#44ff44,#88ff00); transition: width .15s; }
+#hp-num { font-size: 20px; color: #ff6644; margin-top: 3px; }
+#ammo-wrap { position: absolute; bottom: 20px; right: 230px; text-align: right; }
+#ammo-cur { font-size: 38px; color: #ffaa33; }
+#ammo-max { font-size: 18px; color: #664400; }
+#reload-txt { font-size: 13px; color: #ffff33; letter-spacing: 3px; animation: blink .5s infinite; display: none; }
+#low-ammo { font-size: 12px; color: #ff4444; letter-spacing: 2px; display: none; animation: blink .4s infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: .2; } }
+.spopup { position: fixed; font-family: 'Courier New', monospace; font-size: 20px; color: #ffdd00; text-shadow: 0 0 8px #ffaa00; pointer-events: none; z-index: 15; animation: popup 1s ease-out forwards; }
+@keyframes popup { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-65px); } }
+
+/* ── GUN SVG ───────────────────────────────────────────── */
+#gun-svg {
+  position: fixed;
+  bottom: -55px;            /* oculta el borde inferior del mango */
+  left: calc(50% + 70px);  /* ligeramente a la derecha del centro */
+  width: 260px;
+  height: 260px;
+  pointer-events: none;
+  z-index: 6;               /* por encima del overlay 2D → no lo tapa la oscuridad */
+  animation: gun-bob 2.5s ease-in-out infinite;
+  filter: drop-shadow(2px 6px 10px rgba(0, 0, 0, 0.85));
+}
+@keyframes gun-bob {
+  0%, 100% { transform: translateY(0);  }
+  50%       { transform: translateY(6px); }
+}
+
+/* ── SCREENS ───────────────────────────────────────────── */
+.screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,.88); z-index: 50; }
+.gtitle { font-size: 72px; color: #ff2222; text-shadow: 0 0 30px #ff0000, 0 0 70px #550000; letter-spacing: 8px; margin-bottom: 8px; }
+.gsub { font-size: 13px; color: #444; letter-spacing: 5px; margin-bottom: 48px; }
+.slabel { font-size: 11px; color: #444; letter-spacing: 4px; margin-bottom: 12px; }
+.diff-row { display: flex; gap: 12px; margin-bottom: 40px; }
+.dbtn { padding: 11px 26px; background: transparent; border: 1px solid #333; color: #555; font-family: 'Courier New', monospace; font-size: 14px; letter-spacing: 2px; cursor: pointer; transition: all .2s; }
+.dbtn:hover { border-color: #ff4444; color: #ff8888; }
+.dbtn.sel[data-d="1"] { border-color: #44ff88; color: #44ff88; background: rgba(0,255,100,.08); box-shadow: 0 0 14px rgba(0,255,100,.2); }
+.dbtn.sel[data-d="2"] { border-color: #ffaa22; color: #ffaa22; background: rgba(255,150,0,.08); box-shadow: 0 0 14px rgba(255,150,0,.2); }
+.dbtn.sel[data-d="3"] { border-color: #ff2222; color: #ff2222; background: rgba(255,0,0,.1); box-shadow: 0 0 14px rgba(255,0,0,.3); }
+.pbtn { padding: 16px 54px; background: transparent; border: 2px solid #ff4444; color: #ff4444; font-family: 'Courier New', monospace; font-size: 22px; letter-spacing: 4px; cursor: pointer; transition: all .2s; text-transform: uppercase; }
+.pbtn:hover { background: #ff4444; color: #000; box-shadow: 0 0 30px rgba(255,0,0,.5); }
+.sbtn { padding: 10px 30px; background: transparent; border: 1px solid #444; color: #777; font-family: 'Courier New', monospace; font-size: 16px; letter-spacing: 2px; cursor: pointer; transition: all .2s; text-transform: uppercase; margin: 7px; }
+.sbtn:hover { border-color: #888; color: #ccc; }
+.hint { margin-top: 28px; font-size: 11px; color: #2a2a2a; letter-spacing: 2px; }
+.fscore { font-size: 52px; color: #ff4444; text-shadow: 0 0 20px #ff0000; margin: 18px 0; }
+.srow { color: #555; font-size: 14px; letter-spacing: 2px; margin: 3px 0; }
+.srow span { color: #888; }
+
+/* ── ZOMBIE LAYER ───────────────────────────────────────── */
+#zombie-layer { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
+.zombie-el { position: absolute; pointer-events: none; overflow: visible; }
+
+/* Idle animations */
+.zombie-el .zombie-body { animation: z-idle     2s   ease-in-out infinite;     transform-origin: 100px 180px; }
+.zombie-el .arm-left    { animation: z-arm-idle 2.2s ease-in-out infinite;     transform-origin: 60px  105px; }
+.zombie-el .arm-right   { animation: z-arm-idle 2.2s ease-in-out infinite reverse; transform-origin: 140px 105px; }
+.zombie-el .head-bob    {                                                        transform-origin: 100px  90px; }
+.zombie-el .glow-eyes   { animation: z-eye-idle 2s   ease-in-out infinite; }
+
+/* Attack animations — triggered by .attacking class */
+.zombie-el.attacking .zombie-body { animation: z-lunge  1s ease-out; transform-origin: 100px 180px; }
+.zombie-el.attacking .arm-left    { animation: z-atk-l  1s ease-out; transform-origin: 60px  105px; }
+.zombie-el.attacking .arm-right   { animation: z-atk-r  1s ease-out; transform-origin: 140px 105px; }
+.zombie-el.attacking .head-bob    { animation: z-bite   1s ease-out; transform-origin: 100px  90px; }
+.zombie-el.attacking .glow-eyes   { animation: z-eye-atk 1s; }
+
+@keyframes z-idle     { 0%,100% { transform: translateY(0) scale(1); }    50% { transform: translateY(-1px) scale(1.005); } }
+@keyframes z-arm-idle { 0%,100% { transform: rotate(0deg); }              50% { transform: rotate(4deg); } }
+@keyframes z-eye-idle { 0%,100% { fill: #ff6600; }                        50% { fill: #ff7700; } }
+
+@keyframes z-lunge {
+  0%     { transform: scale(1)    translateY(0);    }
+  20%    { transform: scale(1.02) translateY(-2px); }
+  40%    { transform: scale(0.95) translateY(10px); }
+  55%    { transform: scale(1.15) translateY(-5px); }
+  80%    { transform: scale(1.05) translateY(2px);  }
+  100%   { transform: scale(1)    translateY(0);    }
+}
+@keyframes z-atk-l {
+  0%     { transform: rotate(0deg)   translate(0,0)       scale(1);   }
+  40%    { transform: rotate(30deg)  translate(-10px,-15px) scale(0.9); }
+  55%    { transform: rotate(-40deg) translate(25px,15px)  scale(1.6); }
+  80%    { transform: rotate(-10deg) translate(5px,5px)    scale(1.1); }
+  100%   { transform: rotate(0deg)   translate(0,0)       scale(1);   }
+}
+@keyframes z-atk-r {
+  0%     { transform: rotate(0deg)  translate(0,0)        scale(1);   }
+  40%    { transform: rotate(-30deg) translate(10px,-15px) scale(0.9); }
+  55%    { transform: rotate(40deg)  translate(-25px,15px) scale(1.6); }
+  80%    { transform: rotate(10deg)  translate(-5px,5px)   scale(1.1); }
+  100%   { transform: rotate(0deg)  translate(0,0)        scale(1);   }
+}
+@keyframes z-bite {
+  0%     { transform: rotate(0deg);               }
+  40%    { transform: rotate(-5deg) translateY(5px); }
+  55%    { transform: rotate(8deg)  translateY(-8px); }
+  80%    { transform: rotate(2deg);               }
+  100%   { transform: rotate(0deg);               }
+}
+@keyframes z-eye-atk {
+  0%,50% { fill: #ff6600; }
+  60%    { fill: #ffff00; }
+  100%   { fill: #ff6600; }
+}
+
+/* ── BAT ────────────────────────────────────────────────── */
+.bat-el { position: absolute; pointer-events: none; overflow: visible; }
+
+/* Continuous wing flap — pivot from body connection edge */
+.bat-el .bat-wing-l { animation: bat-flap-l 0.32s ease-in-out infinite; transform-box: fill-box; transform-origin: right center; }
+.bat-el .bat-wing-r { animation: bat-flap-r 0.32s ease-in-out infinite; transform-box: fill-box; transform-origin: left  center; }
+.bat-el .bat-eyes   { animation: bat-eye    1.4s ease-in-out infinite; }
+
+/* Swoop attack */
+.bat-el.swooping .bat-wing-l { animation: bat-swoop-l 0.45s ease-out; transform-box: fill-box; transform-origin: right center; }
+.bat-el.swooping .bat-wing-r { animation: bat-swoop-r 0.45s ease-out; transform-box: fill-box; transform-origin: left  center; }
+
+@keyframes bat-flap-l  { 0%,100% { transform: rotate(0deg); }   50% { transform: rotate(-42deg); } }
+@keyframes bat-flap-r  { 0%,100% { transform: rotate(0deg); }   50% { transform: rotate( 42deg); } }
+@keyframes bat-swoop-l { 0% { transform: rotate(0deg); } 35% { transform: rotate(-75deg); } 100% { transform: rotate(0deg); } }
+@keyframes bat-swoop-r { 0% { transform: rotate(0deg); } 35% { transform: rotate( 75deg); } 100% { transform: rotate(0deg); } }
+@keyframes bat-eye     { 0%,100% { fill: #880000; } 50% { fill: #ff3300; } }
