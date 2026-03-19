@@ -9,7 +9,7 @@ export const gs = {
 };
 
 // Camera state — shared between input.js, loop.js and game.js
-export const camState = { yaw: 0, pitch: 0, px: 0, pz: 0 };
+export const camState = { yaw: 0, pitch: 0, px: 0, pz: 0, recoilPitch: 0, recoilYaw: 0, swayX: 0, swayY: 0 };
 
 // Movement keys — written by input.js, read by loop.js
 export const keys = { w: false, a: false, s: false, d: false };

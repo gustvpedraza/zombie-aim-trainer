@@ -9,7 +9,7 @@ import { startBatSpawn, stopBatSpawn, clearBats } from './bat.js';
 
 export function startGame() {
   Object.assign(gs, {
-    score: 0, hp: 100, ammo: GUN.maxAmmo,
+    score: 0, hp: 100, ammo: DIFF[gs.diff].ammo,
     reloading: false, paused: false, over: false, started: true,
     kills: 0, shots: 0, hits: 0, lastShot: 0,
     combo: 0, comboTimer: 0, maxCombo: 0,
@@ -25,7 +25,7 @@ export function startGame() {
   document.getElementById('diff-hud').textContent = DIFF[gs.diff].name;
   document.getElementById('reload-txt').style.display = 'none';
   document.getElementById('low-ammo').style.display = 'none';
-  document.getElementById('ammo-max').textContent = ` / ${GUN.maxAmmo}`;
+  document.getElementById('ammo-max').textContent = ` / ${DIFF[gs.diff].ammo}`;
 
   updateScoreUI(); updateKillsUI(); updateAmmoUI(); updateHpUI(); updateComboUI();
   rc.requestPointerLock();
@@ -43,7 +43,10 @@ export function endGame() {
   document.getElementById('stat-kills').textContent = gs.kills;
   document.getElementById('stat-acc').textContent = acc + '%';
   document.getElementById('stat-combo').textContent = gs.maxCombo;
-  document.getElementById('scr-over').style.display = 'flex';
+  const overScr = document.getElementById('scr-over');
+  overScr.style.display = 'flex';
+  overScr.style.pointerEvents = 'none';
+  setTimeout(() => { overScr.style.pointerEvents = 'auto'; }, 2000);
   document.getElementById('hud').style.display = 'none';
 }
 

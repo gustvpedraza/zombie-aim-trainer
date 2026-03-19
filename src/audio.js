@@ -25,13 +25,122 @@ function tone(f0, dur, type = 'sine', gain = 0.4, f1 = null) {
   o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + dur);
 }
 
-export function sndShot()   { noise(0.13, 1.6, 420, 0.5); tone(180, 0.10, 'sawtooth', 0.7, 38); }
+// Gunshot sound from file — preload the buffer for low-latency playback
+let _shotBuf = null;
+(function preloadShot() {
+  fetch('/music/freesound_community-9mm-pistol-shoot-short-reverb-7152.mp3')
+    .then(r => r.arrayBuffer())
+    .then(buf => {
+      // AC may not exist yet; decode lazily on first use if needed
+      if (AC) AC.decodeAudioData(buf, b => { _shotBuf = b; });
+      else _shotBuf = buf; // store raw, decode on first call
+    })
+    .catch(() => {});
+})();
+
+export function sndShot() {
+  if (!AC) return;
+  if (_shotBuf instanceof AudioBuffer) {
+    const src = AC.createBufferSource();
+    src.buffer = _shotBuf;
+    src.connect(AC.destination);
+    src.start();
+  } else if (_shotBuf) {
+    // First call after AC is ready — decode the raw buffer
+    AC.decodeAudioData(_shotBuf.slice(0), b => {
+      _shotBuf = b;
+      const src = AC.createBufferSource();
+      src.buffer = b;
+      src.connect(AC.destination);
+      src.start();
+    });
+  } else {
+    // Fallback to procedural sound if file hasn't loaded
+    noise(0.13, 1.6, 420, 0.5); tone(180, 0.10, 'sawtooth', 0.7, 38);
+  }
+}
 export function sndHit()    { tone(110, 0.22, 'sawtooth', 0.22, 55); }
 export function sndDeath()  { tone(200, 0.55, 'sawtooth', 0.45, 22); noise(0.14, 0.35, 200, 0.4); }
 export function sndDamage() { noise(0.28, 0.75, 130, 0.5); tone(75, 0.18, 'sine', 0.5, 38); }
 export function sndEmpty()  { tone(200, 0.07, 'square', 0.15); }
+// Reload sound from file
+let _reloadBuf = null;
+(function preloadReload() {
+  fetch('/music/melbeebelbee-gun-full-reload-384507.mp3')
+    .then(r => r.arrayBuffer())
+    .then(buf => {
+      if (AC) AC.decodeAudioData(buf, b => { _reloadBuf = b; });
+      else _reloadBuf = buf;
+    })
+    .catch(() => {});
+})();
+
 export function sndReload() {
-  [0, 140, 280].forEach((d, i) => setTimeout(() => tone(600 + i * 250, 0.06, 'square', 0.2), d));
+  if (!AC) return;
+  if (_reloadBuf instanceof AudioBuffer) {
+    const src = AC.createBufferSource();
+    src.buffer = _reloadBuf;
+    src.connect(AC.destination);
+    src.start();
+  } else if (_reloadBuf) {
+    AC.decodeAudioData(_reloadBuf.slice(0), b => {
+      _reloadBuf = b;
+      const src = AC.createBufferSource();
+      src.buffer = b;
+      src.connect(AC.destination);
+      src.start();
+    });
+  } else {
+    [0, 140, 280].forEach((d, i) => setTimeout(() => tone(600 + i * 250, 0.06, 'square', 0.2), d));
+  }
+}
+
+// Zombie attack SFX from file
+let _zatkBuf = null;
+(function preloadZatk() {
+  fetch('/music/zombie-sfx-450450.mp3')
+    .then(r => r.arrayBuffer())
+    .then(buf => {
+      if (AC) AC.decodeAudioData(buf, b => { _zatkBuf = b; });
+      else _zatkBuf = buf;
+    })
+    .catch(() => {});
+})();
+
+let _zatkPlaying = false;
+
+export function sndZombieAtk() {
+  if (!AC || _zatkPlaying) return null;
+  if (_zatkBuf instanceof AudioBuffer) {
+    _zatkPlaying = true;
+    const src = AC.createBufferSource();
+    src.buffer = _zatkBuf;
+    const g = AC.createGain(); g.gain.value = 0.25;
+    src.connect(g); g.connect(AC.destination);
+    src.onended = () => { _zatkPlaying = false; };
+    src.start();
+    return src;
+  } else if (_zatkBuf) {
+    _zatkPlaying = true;
+    let node = null;
+    AC.decodeAudioData(_zatkBuf.slice(0), b => {
+      _zatkBuf = b;
+      node = AC.createBufferSource();
+      node.buffer = b;
+      const g = AC.createGain(); g.gain.value = 0.25;
+      node.connect(g); g.connect(AC.destination);
+      node.onended = () => { _zatkPlaying = false; };
+      node.start();
+    });
+    return { stop() { _zatkPlaying = false; if (node) node.stop(); } };
+  }
+  return null;
+}
+
+export function stopZombieAtk(src) {
+  if (!src) return;
+  _zatkPlaying = false;
+  try { src.stop(); } catch (_) {}
 }
 
 // ── Background music ─────────────────────────────────────────

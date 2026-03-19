@@ -27,25 +27,16 @@ export function resize(w, h) {
   camera.updateProjectionMatrix();
 }
 
-// Lighting — moonlit night: tiny blue ambient + faint directional moonlight
-scene.add(new THREE.AmbientLight(0x08091a, 0.35));
 
-const moonLight = new THREE.DirectionalLight(0x5566aa, 0.05);
-moonLight.position.set(-18, 35, -12);
-scene.add(moonLight);
-
-export const keyLight = new THREE.PointLight(0xff1a00, 0.3, 28);
-keyLight.position.set(0, 4, 0);
-scene.add(keyLight);
 
 // Linterna (SpotLight pegada a la cámara)
-export const flashlight = new THREE.SpotLight(0xfffff0, 5.5, 45, 0.35, 0.45, 1.5);
+export const flashlight = new THREE.SpotLight(0xbbffee, 12, 50, 0.46, 0.45, 0.8);
 flashlight.position.set(-0.25, -0.1, 0); // desplazada a la izquierda (mano izquierda)
 camera.add(flashlight);
 scene.add(flashlight.target); // el target vive en la escena para que Three.js lo resuelva
 
 flashlight.castShadow = true;
-flashlight.shadow.mapSize.set(1024, 1024);
+flashlight.shadow.mapSize.set(512, 512);
 flashlight.shadow.camera.near = 0.1;
 flashlight.shadow.camera.far = 45;
 
@@ -90,18 +81,20 @@ function buildSkyTex() {
   const c = document.createElement('canvas'); c.width = S; c.height = S;
   const cx = c.getContext('2d');
 
-  // Night sky gradient
+  // Night sky gradient with blue-cyan glow
   const grad = cx.createLinearGradient(0, 0, 0, S);
-  grad.addColorStop(0.0, '#01010e');
-  grad.addColorStop(0.55, '#02020f');
-  grad.addColorStop(1.0, '#08071f');
+  grad.addColorStop(0.0, '#010810');
+  grad.addColorStop(0.3, '#010a14');
+  grad.addColorStop(0.55, '#021018');
+  grad.addColorStop(1.0, '#031620');
   cx.fillStyle = grad; cx.fillRect(0, 0, S, S);
 
-  // Subtle nebula tint near horizon
-  const nebG = cx.createLinearGradient(0, S * 0.35, 0, S * 0.52);
-  nebG.addColorStop(0, 'rgba(20,10,50,0)');
-  nebG.addColorStop(1, 'rgba(30,15,60,0.18)');
-  cx.fillStyle = nebG; cx.fillRect(0, S * 0.35, S, S * 0.17);
+  // Blue-cyan atmospheric glow near horizon
+  const nebG = cx.createLinearGradient(0, S * 0.30, 0, S * 0.55);
+  nebG.addColorStop(0, 'rgba(0,180,244,0)');
+  nebG.addColorStop(0.5, 'rgba(0,180,244,0.08)');
+  nebG.addColorStop(1, 'rgba(0,190,248,0.20)');
+  cx.fillStyle = nebG; cx.fillRect(0, S * 0.30, S, S * 0.25);
 
   // Stars — sparse
   for (let i = 0; i < 420; i++) {
@@ -276,7 +269,7 @@ function buildFloorTex() {
   skyDome.position.y = 4;
   scene.add(skyDome);
 
-  const wallM = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
+  const wallM = new THREE.MeshBasicMaterial({ color: 0x010101 });
   [[0, 2.25, -35, 0], [0, 2.25, 35, Math.PI], [-35, 2.25, 0, Math.PI / 2], [35, 2.25, 0, -Math.PI / 2]]
     .forEach(([x, y, z, ry]) => {
       const w = add(wallM, new THREE.PlaneGeometry(70, 4.5));
@@ -285,12 +278,6 @@ function buildFloorTex() {
     });
 
 
-  const bM = new THREE.MeshBasicMaterial({ color: 0x2a0000, transparent: true, opacity: 0.7 });
-  for (let i = 0; i < 30; i++) {
-    const d = add(bM, new THREE.CircleGeometry(0.3 + Math.random() * 1.8, 8));
-    d.rotation.x = -Math.PI / 2;
-    d.position.set((Math.random() - 0.5) * 60, 0.01, (Math.random() - 0.5) * 60);
-  }
 })();
 
 // Camera shake

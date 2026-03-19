@@ -1,5 +1,6 @@
 import { vc } from './vfx.js';
 import { zombies } from './zombie.js';
+import { bats } from './bat.js';
 import { camRig } from './scene.js';
 import { camState, gs } from './state.js';
 
@@ -27,43 +28,47 @@ export function drawIndicators() {
 
   zombies.forEach(z => {
     if (!z.alive || z.dying) return;
+    drawEnemyIndicator(z, fwdX, fwdZ, cx, cy, ringR, '#ff3300');
+  });
 
-    // Vector from player TO zombie
-    const dx   = z.mesh.position.x - camRig.position.x;
-    const dz   = z.mesh.position.z - camRig.position.z;
+  bats.forEach(b => {
+    if (!b.alive || b.dying) return;
+    drawEnemyIndicator(b, fwdX, fwdZ, cx, cy, ringR, '#aa44ff');
+  });
+}
+
+function drawEnemyIndicator(e, fwdX, fwdZ, cx, cy, ringR, color) {
+    const dx   = e.mesh.position.x - camRig.position.x;
+    const dz   = e.mesh.position.z - camRig.position.z;
     const dist = Math.sqrt(dx * dx + dz * dz);
     if (dist < 0.5) return;
 
-    // Relative angle: 0 = in front, +π/2 = right, ±π = behind, -π/2 = left
     const dot      = dx * fwdX + dz * fwdZ;
     const cross    = fwdX * dz - fwdZ * dx;
     const relAngle = Math.atan2(cross, dot);
 
-    // Skip zombies inside the visible FOV
     if (Math.abs(relAngle) < DEAD_ZONE) return;
 
-    // Opacity: 1.0 at dist ≤ 5, fades to 0.2 at dist ≥ 25
-    const alpha = Math.min(1.0, Math.max(0.2, 1 - (dist - 5) / 20));
+    // Bats visible from further away
+    const alpha = Math.min(1.0, Math.max(0.25, 1 - (dist - 8) / 30));
+    const size = dist < 10 ? 22 : 16;
 
-    // Arrow size: larger when very close (< 8 units away = danger)
-    const size = dist < 8 ? 22 : 16;
-
-    // Position on ring
     const ix = cx + Math.sin(relAngle) * ringR;
     const iy = cy - Math.cos(relAngle) * ringR;
 
-    drawArrow(vx, ix, iy, relAngle, alpha, size);
-  });
+    drawArrow(vx, ix, iy, relAngle, alpha, size, color);
 }
 
-function drawArrow(ctx, x, y, angle, alpha, size) {
+function drawArrow(ctx, x, y, angle, alpha, size, color) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(angle);
   ctx.globalAlpha = alpha;
 
-  // Glow layer (larger, transparent shape underneath)
-  ctx.fillStyle = 'rgba(255, 80, 0, 0.35)';
+  // Glow layer
+  ctx.fillStyle = color.replace(')', ', 0.35)').replace('rgb', 'rgba').replace('#', '');
+  ctx.globalAlpha = alpha * 0.35;
+  ctx.fillStyle = color;
   ctx.beginPath();
   ctx.moveTo(0, -size * 1.7);
   ctx.lineTo( size * 0.9, size * 1.0);
@@ -71,8 +76,9 @@ function drawArrow(ctx, x, y, angle, alpha, size) {
   ctx.closePath();
   ctx.fill();
 
-  // Solid arrow (tip points outward = toward the zombie)
-  ctx.fillStyle = '#ff3300';
+  // Solid arrow
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
   ctx.beginPath();
   ctx.moveTo(0, -size);
   ctx.lineTo( size * 0.55, size * 0.6);
@@ -80,7 +86,7 @@ function drawArrow(ctx, x, y, angle, alpha, size) {
   ctx.closePath();
   ctx.fill();
 
-  // Small bright highlight on the tip
+  // Highlight on tip
   ctx.fillStyle = 'rgba(255, 200, 150, 0.7)';
   ctx.beginPath();
   ctx.moveTo(0, -size * 0.9);
@@ -89,5 +95,5 @@ function drawArrow(ctx, x, y, angle, alpha, size) {
   ctx.closePath();
   ctx.fill();
 
-  ctx.restore(); // restores globalAlpha, transform, etc.
+  ctx.restore();
 }

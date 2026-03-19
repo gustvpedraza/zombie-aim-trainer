@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZOMBIE AIM — Doom Style Trainer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@700;900&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="/assets/index-DAzv78tA.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DDnThjna.css">
+</head>
+
+<body>
+  <canvas id="rc"></canvas>
+  <canvas id="vc"></canvas>
+  <div id="zombie-layer"></div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div id="score">SCORE: 0</div>
+    <div id="kills-hud">KILLS: 0</div>
+    <div id="combo-hud"></div>
+    <div id="diff-hud">NORMAL</div>
+    <div id="crosshair">
+      <div class="ch-line ch-top"></div>
+      <div class="ch-line ch-bot"></div>
+      <div class="ch-line ch-left"></div>
+      <div class="ch-line ch-right"></div>
+      <div class="ch-dot"></div>
+    </div>
+    <div id="kill-feed"></div>
+    <div id="hp-wrap">
+      <div class="stat-lbl">SALUD</div>
+      <div id="hp-bar">
+        <div id="hp-fill"></div>
+      </div>
+      <div id="hp-num">100</div>
+    </div>
+    <div id="ammo-wrap">
+      <div class="stat-lbl">MUNICIÓN</div>
+      <div><span id="ammo-cur">30</span><span id="ammo-max"> / 30</span></div>
+      <div id="reload-txt">RECARGANDO...</div>
+      <div id="low-ammo">¡ MUNICIÓN BAJA !</div>
+    </div>
+  </div>
+
+  <!-- Loading screen -->
+  <div id="scr-loading" class="screen">
+    <div class="gtitle">ZOMBIE AIM</div>
+    <div class="gsub">CARGANDO...</div>
+    <div id="load-bar-wrap">
+      <div id="load-bar-fill"></div>
+    </div>
+    <div id="load-pct">0%</div>
+  </div>
+
+  <!-- Start screen -->
+  <div id="scr-start" class="screen" style="display:none">
+    <div class="gtitle">ZOMBIE AIM</div>
+    <div class="gsub">DOOM STYLE AIM TRAINER</div>
+    <div class="slabel">SELECCIONA DIFICULTAD</div>
+    <div class="diff-row">
+      <button class="dbtn" data-d="1">FÁCIL</button>
+      <button class="dbtn sel" data-d="2">NORMAL</button>
+      <button class="dbtn" data-d="3">DIFÍCIL</button>
+    </div>
+    <button class="pbtn" id="btn-start">INICIAR PARTIDA</button>
+    <div class="hint">WASD = MOVER &nbsp;•&nbsp; CLICK = DISPARAR &nbsp;•&nbsp; R = RECARGAR &nbsp;•&nbsp; ESC = PAUSA
+    </div>
+  </div>
+
+  <!-- Pause screen -->
+  <div id="scr-pause" class="screen" style="display:none">
+    <div class="gtitle" style="font-size:50px">PAUSADO</div>
+    <button class="sbtn" id="btn-resume">CONTINUAR</button>
+    <button class="sbtn" id="btn-pmenu">MENÚ PRINCIPAL</button>
+  </div>
+
+  <!-- Game Over screen -->
+  <div id="scr-over" class="screen" style="display:none">
+    <div class="gtitle">GAME OVER</div>
+    <div class="slabel">PUNTUACIÓN FINAL</div>
+    <div class="fscore" id="final-score">0</div>
+    <div class="srow">KILLS: <span id="stat-kills">0</span></div>
+    <div class="srow">PRECISIÓN: <span id="stat-acc">0%</span></div>
+    <div class="srow">COMBO MÁX: <span id="stat-combo">0</span></div>
+    <div style="margin-top:30px"><button class="pbtn" id="btn-restart">JUGAR DE NUEVO</button></div>
+    <div><button class="sbtn" id="btn-omenu">MENÚ PRINCIPAL</button></div>
+  </div>
+
+  <!-- Gun spritesheet canvas -->
+  <canvas id="gun-canvas"></canvas>
+
+</body>
+
+</html>

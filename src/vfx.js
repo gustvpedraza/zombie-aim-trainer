@@ -6,17 +6,24 @@ export function resizeOverlay(w, h) {
   vc.height = h;
 }
 
+const MAX_BLOOD = 100;
+
 export const vfx = {
   muzzle: 0, red: 0, blood: [],
 
   addBlood(x, y) {
-    for (let i = 0; i < 22; i++) {
-      const a = Math.random() * Math.PI * 2, s = 3 + Math.random() * 10;
+    const count = Math.min(20, MAX_BLOOD - this.blood.length);
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2, s = 5 + Math.random() * 16;
+      const r = 80 + Math.random() * 50 | 0;
+      const g = 16 + Math.random() * 16 | 0;
+      const b = 12 + Math.random() * 16 | 0;
       this.blood.push({
         x, y,
         vx: Math.cos(a) * s * (0.5 + Math.random()),
-        vy: Math.sin(a) * s * (0.5 + Math.random()) - 4.5,
-        sz: 3 + Math.random() * 8, life: 1, decay: 0.04 + Math.random() * 0.04,
+        vy: Math.sin(a) * s * (0.5 + Math.random()) - 6,
+        sz: 4 + Math.random() * 14, life: 1, decay: 0.03 + Math.random() * 0.035,
+        color: `rgb(${r},${g},${b})`,
       });
     }
   },
@@ -36,43 +43,63 @@ export const vfx = {
       this.muzzle -= dt * 10; if (this.muzzle < 0) this.muzzle = 0;
     }
 
-    for (let i = this.blood.length - 1; i >= 0; i--) {
-      const p = this.blood[i];
+    // Blood particles — swap-remove avoids splice overhead
+    let bi = this.blood.length;
+    while (bi-- > 0) {
+      const p = this.blood[bi];
       p.x += p.vx * dt * 55; p.y += p.vy * dt * 55; p.vy += 0.38;
       p.life -= p.decay;
-      if (p.life <= 0) { this.blood.splice(i, 1); continue; }
-      const r = 150 + Math.random() * 60 | 0;
+      if (p.life <= 0) {
+        this.blood[bi] = this.blood[this.blood.length - 1];
+        this.blood.pop();
+        continue;
+      }
       vx.globalAlpha = p.life;
-      vx.fillStyle = `rgb(${r},${Math.random() * 12 | 0},0)`;
-      vx.beginPath(); vx.arc(p.x, p.y, p.sz * p.life, 0, Math.PI * 2); vx.fill();
+      vx.fillStyle = p.color;
+      const s = p.sz * p.life;
+      vx.fillRect(p.x - s * 0.5, p.y - s * 0.5, s, s);
     }
     vx.globalAlpha = 1;
 
-    if (this.red > 0) {
-      vx.fillStyle = `rgba(255,0,0,${this.red * 0.33})`; vx.fillRect(0, 0, W, H);
-      const vg = vx.createRadialGradient(W / 2, H / 2, H * 0.25, W / 2, H / 2, H * 0.75);
-      vg.addColorStop(0, 'rgba(0,0,0,0)');
-      vg.addColorStop(1, `rgba(140,0,0,${this.red * 0.5})`);
-      vx.fillStyle = vg; vx.fillRect(0, 0, W, H);
-      this.red -= dt * 2.5; if (this.red < 0) this.red = 0;
-    }
-
-    // Oscuridad de linterna — reemplaza la viñeta simple
-    // Gradiente radial: transparente en el centro (haz), negro casi total en los bordes
+    // Oscuridad de linterna — negro total fuera del haz
     const cx = W / 2, cy = H / 2;
-    const beamR = Math.min(W, H) * 0.48;
+    const beamR = Math.min(W, H) * 0.43;
+
+    // Capa principal: transición rápida a negro total
     const dark = vx.createRadialGradient(cx, cy, 0, cx, cy, beamR);
     dark.addColorStop(0,    'rgba(0,0,0,0)');
-    dark.addColorStop(0.38, 'rgba(0,0,0,0.18)');
-    dark.addColorStop(0.65, 'rgba(0,0,0,0.86)');
-    dark.addColorStop(1.0,  'rgba(0,0,0,0.97)');
+    dark.addColorStop(0.45, 'rgba(0,0,0,0.15)');
+    dark.addColorStop(0.70, 'rgba(0,0,0,0.85)');
+    dark.addColorStop(0.85, 'rgba(0,0,0,0.97)');
+    dark.addColorStop(1.0,  'rgba(0,0,0,1)');
     vx.fillStyle = dark; vx.fillRect(0, 0, W, H);
 
-    // Halo cálido sutil en el centro del haz (punto caliente de la linterna)
-    const halo = vx.createRadialGradient(cx, cy, 0, cx, cy, beamR * 0.18);
-    halo.addColorStop(0,   'rgba(255,255,220,0.06)');
-    halo.addColorStop(1.0, 'rgba(0,0,0,0)');
-    vx.fillStyle = halo; vx.fillRect(0, 0, W, H);
+    // Capas desplazadas para bordes irregulares
+    const offsets = [
+      { ox: -0.06, oy:  0.04, r: 0.90 },
+      { ox:  0.05, oy: -0.04, r: 1.06 },
+      { ox: -0.03, oy: -0.05, r: 0.95 },
+    ];
+    for (let l = 0; l < offsets.length; l++) {
+      const { ox, oy, r } = offsets[l];
+      const lx = cx + ox * beamR, ly = cy + oy * beamR, lr = beamR * r;
+      const g = vx.createRadialGradient(lx, ly, 0, lx, ly, lr);
+      g.addColorStop(0,    'rgba(0,0,0,0)');
+      g.addColorStop(0.55, 'rgba(0,0,0,0)');
+      g.addColorStop(0.78, 'rgba(0,0,0,0.35)');
+      g.addColorStop(1.0,  'rgba(0,0,0,0.55)');
+      vx.fillStyle = g; vx.fillRect(0, 0, W, H);
+    }
+
+    // ── Damage red overlay (sobre todo, incluida la linterna) ──
+    if (this.red > 0) {
+      vx.fillStyle = `rgba(255,0,0,${this.red * 0.18})`; vx.fillRect(0, 0, W, H);
+      const vg = vx.createRadialGradient(W / 2, H / 2, H * 0.15, W / 2, H / 2, H * 0.7);
+      vg.addColorStop(0, 'rgba(0,0,0,0)');
+      vg.addColorStop(1, `rgba(180,0,0,${this.red * 0.6})`);
+      vx.fillStyle = vg; vx.fillRect(0, 0, W, H);
+      this.red -= dt * 1.5; if (this.red < 0) this.red = 0;
+    }
 
   },
 
